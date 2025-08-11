@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "../../../lib/supabase/server";
+import jwt from "jsonwebtoken";
 
 export async function GET() {
   const supabase = await createClient();
@@ -10,10 +11,29 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  // Check admin auth here (example placeholder)
-  const isAdmin = true; // Replace with real auth check
-  if (!isAdmin)
+  const token = req.cookies.get("accessToken")?.value;
+
+  console.log("Token: ", token);
+  if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Verify token
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+      userId: string;
+      email: string;
+      role: string;
+    };
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (decoded?.role !== "admin") {
+    // TODO: Change to enum
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const body = await req.json();
   const {
