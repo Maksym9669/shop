@@ -7,6 +7,8 @@ import { useEffect, useState } from "react";
 interface User {
   email: string;
   role: string;
+  fullName: string;
+  id: number;
 }
 
 export default function Navigation() {
@@ -22,10 +24,13 @@ export default function Navigation() {
         const res = await fetch("/api/auth/me", {
           credentials: "include",
         });
+
         if (!res.ok) {
           setUser(null);
         } else {
           const data = await res.json();
+          console.log("9999999999999999999");
+          console.log("Data: ", data);
           setUser(data);
         }
       } catch {
@@ -107,6 +112,10 @@ export default function Navigation() {
             Адмін
           </Link>
         </li>
+      )}
+
+      {user && (
+        <li className={`text-black`}>Ласкаво просимо,&nbsp;{user.fullName}</li>
       )}
     </ul>
   );

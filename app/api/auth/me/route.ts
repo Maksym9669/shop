@@ -18,7 +18,11 @@ export async function GET(req: NextRequest) {
 
     console.log("00000-444444444");
 
-    return NextResponse.json({ email: decoded.email, role: decoded.role });
+    return NextResponse.json({
+      email: decoded.email,
+      role: decoded.role,
+      fullName: decoded.fullName,
+    });
   } catch (error) {
     console.log("00000-5555555555");
 

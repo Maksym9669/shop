@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
 interface Order {
   id: string;
   customer: string;
@@ -33,6 +36,42 @@ const sampleOrders: Order[] = [
 ];
 
 export default function AdminOrders() {
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const res = await fetch("/api/auth/me", {
+          method: "GET",
+          credentials: "include", // send cookies
+        });
+
+        if (!res.ok) {
+          router.push("/login");
+          return;
+        }
+
+        const user = await res.json();
+        if (user.role !== "admin") {
+          router.push("/"); // not an admin
+          return;
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.error("Auth check failed:", err);
+        router.push("/login");
+      }
+    }
+
+    checkAuth();
+  }, [router]);
+
+  if (loading) {
+    return <div className="p-6">⏳ Перевірка доступу...</div>;
+  }
+
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white rounded shadow">
       <h1 className="text-3xl font-bold mb-6 text-gray-900">
