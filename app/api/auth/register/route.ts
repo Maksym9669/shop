@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const { email, password, full_name: fullName } = body;
+    const { email, password, fullName } = body;
 
     if (!email || !password) {
       return NextResponse.json(

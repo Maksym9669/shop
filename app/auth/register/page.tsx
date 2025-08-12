@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 export default function RegisterPage() {
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -15,12 +16,13 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ fullName, email, password }),
       });
 
       const data = await res.json();
       if (res.ok) {
         setMessage("✅ Реєстрація успішна! Ви можете увійти.");
+        setFullName("");
         setEmail("");
         setPassword("");
       } else {
@@ -43,6 +45,15 @@ export default function RegisterPage() {
         )}
 
         <form onSubmit={handleRegister} className="space-y-4">
+          <input
+            type="text"
+            placeholder="Повне ім’я"
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-blue-300"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            required
+          />
+
           <input
             type="email"
             placeholder="Email"
