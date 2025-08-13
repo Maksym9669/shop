@@ -12,8 +12,9 @@ export default function EditProductPage() {
     description: "",
     price: "",
     quantity: "",
-    categoryId: "",
+    category_id: "",
   });
+  const [image, setImage] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -30,7 +31,7 @@ export default function EditProductPage() {
           description: data.description || "",
           price: data.price?.toString() || "",
           quantity: data.quantity?.toString() || "",
-          categoryId: data.category_id?.toString() || "",
+          category_id: data.category_id?.toString() || "",
         });
       } catch (err: any) {
         setError(err.message);
@@ -47,22 +48,30 @@ export default function EditProductPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files && e.target.files[0]) {
+      setImage(e.target.files[0]);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     setError("");
 
     try {
+      const formData = new FormData();
+      formData.append("name", form.name);
+      formData.append("description", form.description);
+      formData.append("price", form.price);
+      formData.append("quantity", form.quantity);
+      formData.append("category_id", form.category_id);
+
+      if (image) formData.append("image", image);
+
       const res = await fetch(`/api/products/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: form.name,
-          description: form.description,
-          price: parseFloat(form.price),
-          quantity: parseInt(form.quantity),
-          categoryId: parseInt(form.categoryId),
-        }),
+        body: formData, // sending as multipart/form-data
       });
 
       if (!res.ok) throw new Error("Failed to update product");
@@ -157,11 +166,21 @@ export default function EditProductPage() {
             <label className="block mb-1 font-medium">Category ID</label>
             <input
               type="number"
-              name="categoryId"
-              value={form.categoryId}
+              name="category_id"
+              value={form.category_id}
               onChange={handleChange}
               className="w-full border p-2 rounded"
               required
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">Product Image</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="w-full"
             />
           </div>
 

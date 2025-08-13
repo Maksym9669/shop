@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "../../../../lib/supabase/server";
+import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { s3 } from "../../../../lib/s3";
 import jwt from "jsonwebtoken";
 
 export async function PATCH(
@@ -36,24 +38,26 @@ export async function PATCH(
   if (!isAdmin)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json();
-  const {
-    name,
-    description,
-    price,
-    categoryId,
-    image_url: imageUrl,
-    quantity,
-  } = body;
+  const formData = await req.formData();
 
-  if (
-    !name &&
-    !description &&
-    !price &&
-    !categoryId &&
-    !imageUrl &&
-    !quantity
-  ) {
+  const name = formData.get("name");
+  const description = formData.get("description");
+  const price = formData.get("price");
+  const categoryId = formData.get("category_id");
+  const quantity = formData.get("quantity");
+  const image = formData.get("image") as File;
+
+  // const body = await req.json();
+  // const {
+  //   name,
+  //   description,
+  //   price,
+  //   categoryId,
+  //   image_url: imageUrl,
+  //   quantity,
+  // } = body;
+
+  if (!name && !description && !price && !categoryId && !image && !quantity) {
     return NextResponse.json({ error: "No fields to update" }, { status: 400 });
   }
 
@@ -75,8 +79,34 @@ export async function PATCH(
   if (description) updates.description = description;
   if (price) updates.price = price;
   if (categoryId) updates.category_id = categoryId;
-  if (imageUrl) updates.imageUrl = imageUrl;
   if (quantity) updates.quantity = quantity;
+
+  if (image) {
+    const buffer = Buffer.from(await image.arrayBuffer());
+    const key = `products/${Date.now()}-${image.name}`;
+
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: process.env.AWS_BUCKET_NAME!,
+        Key: key,
+        Body: buffer,
+        ContentType: image.type,
+      })
+    );
+
+    updates.image_url = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+
+    if (product.image_url) {
+      const oldKey = product.image_url.split("/").pop();
+
+      await s3.send(
+        new DeleteObjectCommand({
+          Bucket: process.env.AWS_BUCKET_NAME!,
+          Key: `products/${oldKey}`,
+        })
+      );
+    }
+  }
 
   updates.updated_at = new Date();
 
@@ -122,16 +152,8 @@ export async function DELETE(
   }
 
   const { id } = await params;
-  // Check admin auth here
-  const isAdmin = true; // Replace with real auth check
-  if (!isAdmin)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const supabase = await createClient();
-  //   const { error } = await supabase.from("products").delete().eq("id", id);
-
-  //   if (error)
-  //     return NextResponse.json({ error: error.message }, { status: 500 });
 
   const { data: product } = await supabase
     .from("products")
@@ -143,8 +165,23 @@ export async function DELETE(
     return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
 
-  const result = await supabase.from("products").delete().eq("id", id);
-  console.log("Result: ", result);
+  try {
+    if (product.image_url) {
+      const oldKey = product.image_url.split("/").pop();
+
+      await s3.send(
+        new DeleteObjectCommand({
+          Bucket: process.env.AWS_BUCKET_NAME!,
+          Key: `products/${oldKey}`,
+        })
+      );
+    }
+
+    await supabase.from("products").delete().eq("id", id);
+  } catch (err) {
+    console.log("Error: ", err);
+    throw new Error("Error deleting product");
+  }
 
   return NextResponse.json({ message: "Deleted successfully" });
 }
