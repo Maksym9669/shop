@@ -13,6 +13,7 @@ export default function CreateProductPage() {
     quantity: "",
     category_id: "",
   });
+  const [image, setImage] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -22,22 +23,30 @@ export default function CreateProductPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files && e.target.files[0]) {
+      setImage(e.target.files[0]);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     setError("");
 
     try {
-      const res = await fetch(`/api/products`, {
+      const formData = new FormData();
+      formData.append("name", form.name);
+      formData.append("description", form.description);
+      formData.append("price", form.price);
+      formData.append("quantity", form.quantity);
+      formData.append("category_id", form.category_id);
+
+      if (image) formData.append("image", image);
+
+      const res = await fetch("/api/products", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: form.name,
-          description: form.description,
-          price: parseFloat(form.price),
-          quantity: parseInt(form.quantity),
-          category_id: parseInt(form.category_id),
-        }),
+        body: formData, // sending as multipart/form-data
       });
 
       if (!res.ok) throw new Error("Failed to create product");
@@ -74,7 +83,6 @@ export default function CreateProductPage() {
       </div>
 
       {/* Main Content */}
-
       <div className="flex-1 w-full md:max-w-lg mx-auto mt-0 md:mt-8 p-6 bg-white shadow rounded">
         <h1 className="text-2xl font-bold mb-4">Створити товар</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -135,6 +143,16 @@ export default function CreateProductPage() {
               onChange={handleChange}
               className="w-full border p-2 rounded"
               required
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">Фото товару</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="w-full"
             />
           </div>
 

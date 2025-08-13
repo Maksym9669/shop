@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "../../../lib/supabase/server";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { s3 } from "../../../lib/s3";
 import jwt from "jsonwebtoken";
 
 export async function GET() {
@@ -11,6 +13,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  console.log("s3: ", s3);
   const token = req.cookies.get("accessToken")?.value;
 
   if (!token) {
@@ -35,17 +38,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json();
-  const {
-    name,
-    description,
-    price,
-    category_id: categoryId,
-    image_url: imageUrl,
-    quantity,
-  } = body;
+  const formData = await req.formData();
 
-  console.log("Body: ", body);
+  const name = formData.get("name");
+  const description = formData.get("description");
+  const price = formData.get("price");
+  const categoryId = formData.get("category_id");
+  const quantity = formData.get("quantity");
+
+  const image = formData.get("image") as File;
+
+  let imageUrl;
+  if (image) {
+    const buffer = Buffer.from(await image.arrayBuffer());
+    const key = `products/${Date.now()}-${image.name}`;
+
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: process.env.AWS_BUCKET_NAME!,
+        Key: key,
+        Body: buffer,
+        ContentType: image.type,
+      })
+    );
+
+    imageUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+  }
 
   if (!name || !price || !categoryId || !quantity || !description) {
     return NextResponse.json(
@@ -53,8 +71,6 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
-
-  console.log("1111111111-555555555555555");
 
   const supabase = await createClient();
 
