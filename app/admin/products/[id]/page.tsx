@@ -18,7 +18,7 @@ export default function EditProductPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // Fetch product
+  // Fetch product data
   useEffect(() => {
     async function fetchProduct() {
       try {
@@ -77,83 +77,108 @@ export default function EditProductPage() {
     }
   }
 
+  // Handle dropdown navigation
+  const handlePageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const path = e.target.value;
+    if (path) router.push(path);
+  };
+
   if (loading) return <div className="p-4">Loading product...</div>;
   if (error) return <div className="p-4 text-red-500">{error}</div>;
 
   return (
-    <div className="max-w-lg mx-auto mt-8 p-6 bg-white shadow rounded">
-      <h1 className="text-2xl font-bold mb-4">Edit Product</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block mb-1 font-medium">Name</label>
-          <input
-            type="text"
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1 font-medium">Description</label>
-          <textarea
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1 font-medium">Price</label>
-          <input
-            type="number"
-            name="price"
-            step="0.01"
-            value={form.price}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1 font-medium">Quantity</label>
-          <input
-            type="number"
-            name="quantity"
-            value={form.quantity}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-            required
-            min="0"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1 font-medium">Category ID</label>
-          <input
-            type="number"
-            name="categoryId"
-            value={form.categoryId}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-            required
-          />
-        </div>
-
-        {error && <div className="text-red-500">{error}</div>}
-
-        <button
-          type="submit"
-          disabled={saving}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+    <div className="flex min-h-screen bg-gray-50">
+      {/* Sidebar / Dropdown */}
+      <div className="p-4 bg-white shadow h-full w-64">
+        <label className="block mb-2 font-semibold text-gray-800">
+          Перейти до:
+        </label>
+        <select
+          className="w-full p-2 border rounded"
+          onChange={handlePageChange}
+          defaultValue={`/admin/products/${id}/edit`}
         >
-          {saving ? "Saving..." : "Save Changes"}
-        </button>
-      </form>
+          <option value="/admin/">📊 Дашборд</option>
+          <option value="/admin/products">📦 Товари</option>
+          <option value="/admin/orders">🛒 Замовлення</option>
+        </select>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 max-w-lg mx-auto mt-8 p-6 bg-white shadow rounded">
+        <h1 className="text-2xl font-bold mb-4">Edit Product</h1>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block mb-1 font-medium">Name</label>
+            <input
+              type="text"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              className="w-full border p-2 rounded"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">Description</label>
+            <textarea
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              className="w-full border p-2 rounded"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">Price</label>
+            <input
+              type="number"
+              name="price"
+              step="0.01"
+              value={form.price}
+              onChange={handleChange}
+              className="w-full border p-2 rounded"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">Quantity</label>
+            <input
+              type="number"
+              name="quantity"
+              value={form.quantity}
+              onChange={handleChange}
+              className="w-full border p-2 rounded"
+              required
+              min="0"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">Category ID</label>
+            <input
+              type="number"
+              name="categoryId"
+              value={form.categoryId}
+              onChange={handleChange}
+              className="w-full border p-2 rounded"
+              required
+            />
+          </div>
+
+          {error && <div className="text-red-500">{error}</div>}
+
+          <button
+            type="submit"
+            disabled={saving}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+          >
+            {saving ? "Saving..." : "Save Changes"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

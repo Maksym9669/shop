@@ -72,38 +72,59 @@ export default function AdminOrders() {
     return <div className="p-6">⏳ Перевірка доступу...</div>;
   }
 
-  return (
-    <div className="max-w-6xl mx-auto p-6 bg-white rounded shadow">
-      <h1 className="text-3xl font-bold mb-6 text-gray-900">
-        Перегляд замовлень
-      </h1>
+  const handlePageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const path = e.target.value;
+    if (path) router.push(path);
+  };
 
-      <table className="w-full border-collapse border border-gray-300 text-gray-900">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border border-gray-300 p-2">№ Замовлення</th>
-            <th className="border border-gray-300 p-2">Клієнт</th>
-            <th className="border border-gray-300 p-2 text-right">
-              Сума (грн)
-            </th>
-            <th className="border border-gray-300 p-2">Статус</th>
-            <th className="border border-gray-300 p-2">Дата</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sampleOrders.map((o) => (
-            <tr key={o.id} className="hover:bg-gray-50 cursor-pointer">
-              <td className="border border-gray-300 p-2">{o.id}</td>
-              <td className="border border-gray-300 p-2">{o.customer}</td>
-              <td className="border border-gray-300 p-2 text-right">
-                {o.total}
-              </td>
-              <td className="border border-gray-300 p-2">{o.status}</td>
-              <td className="border border-gray-300 p-2">{o.date}</td>
+  return (
+    <div className="flex min-h-screen bg-gray-50">
+      {/* Sidebar / Dropdown */}
+      <div className="p-4 bg-white shadow h-full w-64">
+        <select
+          className="w-full p-2 border rounded"
+          onChange={handlePageChange}
+          defaultValue="/admin/orders"
+        >
+          <option value="/admin/dashboard">📊 Дашборд</option>
+          <option value="/admin/products">📦 Товари</option>
+          <option value="/admin/orders">🛒 Замовлення</option>
+        </select>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 max-w-6xl mx-auto p-6 bg-white rounded shadow m-6">
+        <h1 className="text-3xl font-bold mb-6 text-gray-900">
+          Перегляд замовлень
+        </h1>
+
+        <table className="w-full border-collapse border border-gray-300 text-gray-900">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="border border-gray-300 p-2">№ Замовлення</th>
+              <th className="border border-gray-300 p-2">Клієнт</th>
+              <th className="border border-gray-300 p-2 text-right">
+                Сума (грн)
+              </th>
+              <th className="border border-gray-300 p-2">Статус</th>
+              <th className="border border-gray-300 p-2">Дата</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {sampleOrders.map((o) => (
+              <tr key={o.id} className="hover:bg-gray-50 cursor-pointer">
+                <td className="border border-gray-300 p-2">{o.id}</td>
+                <td className="border border-gray-300 p-2">{o.customer}</td>
+                <td className="border border-gray-300 p-2 text-right">
+                  {o.total}
+                </td>
+                <td className="border border-gray-300 p-2">{o.status}</td>
+                <td className="border border-gray-300 p-2">{o.date}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
