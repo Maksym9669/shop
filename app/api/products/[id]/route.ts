@@ -1,10 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "../../../../lib/supabase/server";
+import jwt from "jsonwebtoken";
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const token = req.cookies.get("accessToken")?.value;
+
+  if (!token) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Verify token
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+      userId: string;
+      email: string;
+      role: string;
+      fullName: string;
+    };
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (decoded?.role !== "admin") {
+    // TODO: Change to enum
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const { id } = await params;
   // Check admin auth here
   const isAdmin = true; // Replace with real auth check
@@ -72,6 +97,30 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const token = req.cookies.get("accessToken")?.value;
+
+  if (!token) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Verify token
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+      userId: string;
+      email: string;
+      role: string;
+      fullName: string;
+    };
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (decoded?.role !== "admin") {
+    // TODO: Change to enum
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const { id } = await params;
   // Check admin auth here
   const isAdmin = true; // Replace with real auth check

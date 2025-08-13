@@ -14,23 +14,16 @@ interface Product {
 export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteName, setDeleteName] = useState<string>("");
   const router = useRouter();
 
   useEffect(() => {
     const checkAuthAndLoad = async () => {
       try {
-        // // 1. Check authentication
-        // const meRes = await fetch("/api/auth/me", { credentials: "include" });
-        // if (meRes.status === 401) {
-        //   router.push("/login");
-        //   return;
-        // }
-
-        // // 2. Load products if authenticated
-
         const res = await fetch("/api/auth/me", {
           method: "GET",
-          credentials: "include", // send cookies
+          credentials: "include",
         });
 
         if (!res.ok) {
@@ -40,16 +33,14 @@ export default function AdminProducts() {
 
         const user = await res.json();
         if (user.role !== "admin") {
-          router.push("/"); // not an admin
+          router.push("/");
           return;
         }
 
         const data = await fetch("/api/products", { credentials: "include" });
-        if (!res.ok) throw new Error("Failed to fetch products");
+        if (!data.ok) throw new Error("Failed to fetch products");
 
         const products = await data.json();
-        console.log("Products");
-
         setProducts(products);
       } catch (err) {
         console.error(err);
@@ -60,6 +51,25 @@ export default function AdminProducts() {
 
     checkAuthAndLoad();
   }, [router]);
+
+  async function handleDeleteConfirm() {
+    if (!deleteId) return;
+
+    try {
+      const res = await fetch(`/api/products/${deleteId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!res.ok) throw new Error("Не вдалося видалити товар");
+
+      setProducts((prev) => prev.filter((p) => p.id !== deleteId));
+      setDeleteId(null); // закрити модалку
+    } catch (err) {
+      console.error(err);
+      alert("Помилка при видаленні товару");
+    }
+  }
 
   if (loading) {
     return <div className="p-6">Завантаження...</div>;
@@ -106,7 +116,10 @@ export default function AdminProducts() {
                   Редагувати
                 </Link>
                 <button
-                  onClick={() => alert(`Видалити товар ${p.name}?`)}
+                  onClick={() => {
+                    setDeleteId(p.id);
+                    setDeleteName(p.name);
+                  }}
                   className="text-red-600 hover:underline"
                 >
                   Видалити
@@ -116,6 +129,33 @@ export default function AdminProducts() {
           ))}
         </tbody>
       </table>
+
+      {/* Модальне вікно підтвердження */}
+      {deleteId && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-96">
+            <h2 className="text-xl font-bold mb-4">Підтвердження видалення</h2>
+            <p className="mb-6">
+              Ви дійсно хочете видалити товар{" "}
+              <span className="font-semibold">{deleteName}</span>?
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setDeleteId(null)}
+                className="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100"
+              >
+                Скасувати
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
+              >
+                Видалити
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

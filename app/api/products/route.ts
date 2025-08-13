@@ -13,7 +13,6 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const token = req.cookies.get("accessToken")?.value;
 
-  console.log("Token: ", token);
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -46,12 +45,16 @@ export async function POST(req: NextRequest) {
     quantity,
   } = body;
 
+  console.log("Body: ", body);
+
   if (!name || !price || !categoryId || !quantity || !description) {
     return NextResponse.json(
       { error: "Missing required fields" },
       { status: 400 }
     );
   }
+
+  console.log("1111111111-555555555555555");
 
   const supabase = await createClient();
 
