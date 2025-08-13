@@ -81,9 +81,22 @@ export default function AdminProducts() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar / Dropdown */}
-      <div className="p-4 bg-white shadow h-full w-64">
+    <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
+      {/* Sidebar for desktop (md+) */}
+      <div className="hidden md:block p-4 bg-white shadow h-full w-64">
+        <select
+          className="w-full p-2 border rounded"
+          onChange={handlePageChange}
+          defaultValue="/admin/products"
+        >
+          <option value="/admin/">📊 Дашборд</option>
+          <option value="/admin/products">📦 Товари</option>
+          <option value="/admin/orders">🛒 Замовлення</option>
+        </select>
+      </div>
+
+      {/* Dropdown above content on mobile (<md) */}
+      <div className="block md:hidden p-4 bg-white shadow">
         <select
           className="w-full p-2 border rounded"
           onChange={handlePageChange}
@@ -96,8 +109,9 @@ export default function AdminProducts() {
       </div>
 
       {/* Main Content */}
+      {/* Main Content */}
       <div className="flex-1 max-w-6xl mx-auto p-6 bg-white rounded shadow m-6">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-3">
           <h1 className="text-3xl font-bold text-gray-900">
             Керування товарами
           </h1>
@@ -152,7 +166,7 @@ export default function AdminProducts() {
           </tbody>
         </table>
 
-        {/* Модальне вікно підтвердження */}
+        {/* Confirmation Modal */}
         {deleteId && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40">
             <div className="bg-white rounded-lg shadow-lg p-6 w-96">

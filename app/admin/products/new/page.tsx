@@ -56,9 +56,9 @@ export default function CreateProductPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
       {/* Sidebar / Dropdown */}
-      <div className="p-4 bg-white shadow h-full w-64">
+      <div className="p-4 bg-white shadow w-full md:w-64 h-auto md:h-full mb-4 md:mb-0">
         <label className="block mb-2 font-semibold text-gray-800">
           Перейти до:
         </label>
@@ -74,7 +74,8 @@ export default function CreateProductPage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 max-w-lg mx-auto mt-8 p-6 bg-white shadow rounded">
+
+      <div className="flex-1 w-full md:max-w-lg mx-auto mt-0 md:mt-8 p-6 bg-white shadow rounded">
         <h1 className="text-2xl font-bold mb-4">Створити товар</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

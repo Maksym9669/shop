@@ -44,7 +44,7 @@ export default function AdminOrders() {
       try {
         const res = await fetch("/api/auth/me", {
           method: "GET",
-          credentials: "include", // send cookies
+          credentials: "include",
         });
 
         if (!res.ok) {
@@ -54,7 +54,7 @@ export default function AdminOrders() {
 
         const user = await res.json();
         if (user.role !== "admin") {
-          router.push("/"); // not an admin
+          router.push("/");
           return;
         }
 
@@ -68,9 +68,7 @@ export default function AdminOrders() {
     checkAuth();
   }, [router]);
 
-  if (loading) {
-    return <div className="p-6">⏳ Перевірка доступу...</div>;
-  }
+  if (loading) return <div className="p-6">⏳ Перевірка доступу...</div>;
 
   const handlePageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const path = e.target.value;
@@ -78,9 +76,22 @@ export default function AdminOrders() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar / Dropdown */}
-      <div className="p-4 bg-white shadow h-full w-64">
+    <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
+      {/* Sidebar for desktop (md+) */}
+      <div className="hidden md:block p-4 bg-white shadow h-full w-64">
+        <select
+          className="w-full p-2 border rounded"
+          onChange={handlePageChange}
+          defaultValue="/admin/orders"
+        >
+          <option value="/admin/dashboard">📊 Дашборд</option>
+          <option value="/admin/products">📦 Товари</option>
+          <option value="/admin/orders">🛒 Замовлення</option>
+        </select>
+      </div>
+
+      {/* Dropdown above content on mobile (<md) */}
+      <div className="block md:hidden p-4 bg-white shadow">
         <select
           className="w-full p-2 border rounded"
           onChange={handlePageChange}

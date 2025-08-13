@@ -10,7 +10,6 @@ export default function AdminDashboard() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // 1. Check authentication
         const res = await fetch("/api/auth/me", {
           credentials: "include",
         });
@@ -18,8 +17,6 @@ export default function AdminDashboard() {
         if (!res.ok) throw new Error("Not authenticated");
 
         const user = await res.json();
-
-        // 2. Check role
         if (user.role !== "admin") {
           router.push("/");
           return;
@@ -48,9 +45,22 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar / Dropdown */}
-      <div className="p-4 bg-white shadow h-full w-64">
+    <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
+      {/* Sidebar for desktop */}
+      <div className="hidden md:block p-4 bg-white shadow h-full w-64">
+        <select
+          className="w-full p-2 border rounded"
+          onChange={handlePageChange}
+          defaultValue="/admin/"
+        >
+          <option value="/admin/">📊 Дашборд</option>
+          <option value="/admin/products">📦 Товари</option>
+          <option value="/admin/orders">🛒 Замовлення</option>
+        </select>
+      </div>
+
+      {/* Dropdown above content for mobile */}
+      <div className="block md:hidden p-4 bg-white shadow">
         <select
           className="w-full p-2 border rounded"
           onChange={handlePageChange}

@@ -29,8 +29,6 @@ export default function Navigation() {
           setUser(null);
         } else {
           const data = await res.json();
-          console.log("9999999999999999999");
-          console.log("Data: ", data);
           setUser(data);
         }
       } catch {
@@ -43,7 +41,6 @@ export default function Navigation() {
     fetchUser();
   }, []);
 
-  // Links to show regardless
   const commonLinks = [
     { href: "/", label: "Головна" },
     { href: "/catalog", label: "Каталог" },
@@ -51,13 +48,10 @@ export default function Navigation() {
     { href: "/contact", label: "Контакти" },
   ];
 
-  if (loading) {
-    // Optionally show loading or empty placeholder to avoid flicker
-    return null;
-  }
+  if (loading) return null;
 
   return (
-    <ul className="flex gap-4 text-base font-bold items-center">
+    <ul className="flex gap-4 font-bold items-center text-base sm:text-sm xs:text-xs">
       {commonLinks.map(({ href, label }) => (
         <li key={href}>
           <Link
@@ -77,7 +71,7 @@ export default function Navigation() {
         <li>
           <button
             onClick={() => router.push("/auth/login")}
-            className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 transition"
+            className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 transition text-base sm:text-sm xs:text-xs"
           >
             Увійти
           </button>
@@ -88,7 +82,7 @@ export default function Navigation() {
         <li>
           <Link
             href="/cart"
-            className={`transition-colors ${
+            className={`transition-colors text-base sm:text-sm xs:text-xs ${
               pathname === "/cart"
                 ? "text-blue-600 border-b-2 border-blue-600"
                 : "text-black hover:text-blue-600"
@@ -103,7 +97,7 @@ export default function Navigation() {
         <li>
           <Link
             href="/admin"
-            className={`transition-colors ${
+            className={`transition-colors text-base sm:text-sm xs:text-xs ${
               pathname === "/admin"
                 ? "text-blue-600 border-b-2 border-blue-600"
                 : "text-black hover:text-blue-600"
@@ -115,7 +109,9 @@ export default function Navigation() {
       )}
 
       {user && (
-        <li className={`text-black`}>Ласкаво просимо,&nbsp;{user.fullName}</li>
+        <li className="text-black text-base sm:text-sm xs:text-xs">
+          Ласкаво просимо,&nbsp;{user.fullName}
+        </li>
       )}
     </ul>
   );

@@ -41,14 +41,12 @@ export default function EditProductPage() {
     fetchProduct();
   }, [id]);
 
-  // Handle input change
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
-  // Handle submit
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -77,7 +75,6 @@ export default function EditProductPage() {
     }
   }
 
-  // Handle dropdown navigation
   const handlePageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const path = e.target.value;
     if (path) router.push(path);
@@ -87,9 +84,9 @@ export default function EditProductPage() {
   if (error) return <div className="p-4 text-red-500">{error}</div>;
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
       {/* Sidebar / Dropdown */}
-      <div className="p-4 bg-white shadow h-full w-64">
+      <div className="p-4 bg-white shadow w-full md:w-64 mb-4 md:mb-0">
         <label className="block mb-2 font-semibold text-gray-800">
           Перейти до:
         </label>
@@ -105,7 +102,7 @@ export default function EditProductPage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 max-w-lg mx-auto mt-8 p-6 bg-white shadow rounded">
+      <div className="flex-1 w-full max-w-lg md:max-w-lg mx-auto p-6 bg-white shadow rounded">
         <h1 className="text-2xl font-bold mb-4">Edit Product</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
