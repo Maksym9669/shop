@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "../../../../lib/supabase/server";
+import jwt from "jsonwebtoken";
 
 export async function PATCH(
   req: NextRequest,
@@ -7,10 +8,28 @@ export async function PATCH(
 ) {
   const { id } = await params;
 
-  // Check admin auth here
-  const isAdmin = true; // Replace with real auth check
-  if (!isAdmin) {
+  const token = req.cookies.get("accessToken")?.value;
+
+  if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Verify token
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+      userId: string;
+      email: string;
+      role: string;
+      fullName: string;
+    };
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Only admins can update orders
+  if (decoded.role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   let body;
@@ -53,24 +72,44 @@ export async function GET(
 ) {
   const { id } = await params;
 
-  // Check admin auth here
-  const isAdmin = true; // Replace with real auth check
-  if (!isAdmin)
+  const token = req.cookies.get("accessToken")?.value;
+
+  if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Verify token
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+      userId: string;
+      email: string;
+      role: string;
+      fullName: string;
+    };
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const supabase = await createClient();
-  const { data: product, error } = await supabase
+  const { data: order, error } = await supabase
     .from("orders")
     .select("*")
     .eq("id", id)
     .single();
 
   if (error) {
-    if (!product) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 });
-    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(product);
+  if (!order) {
+    return NextResponse.json({ error: "Order not found" }, { status: 404 });
+  }
+
+  // Admin can see any order, customers can only see their own
+  if (decoded.role !== "admin" && order.user_id !== decoded.userId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  return NextResponse.json(order);
 }

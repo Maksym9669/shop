@@ -33,10 +33,6 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  // Check admin auth here
-  const isAdmin = true; // Replace with real auth check
-  if (!isAdmin)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const formData = await req.formData();
 
@@ -192,11 +188,6 @@ export async function GET(
 ) {
   const { id } = await params;
 
-  // Check admin auth here
-  const isAdmin = true; // Replace with real auth check
-  if (!isAdmin)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
   const supabase = await createClient();
   const { data: product, error } = await supabase
     .from("products")
@@ -205,10 +196,11 @@ export async function GET(
     .single();
 
   if (error) {
-    if (!product) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
-    }
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  if (!product) {
+    return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
 
   return NextResponse.json(product);
