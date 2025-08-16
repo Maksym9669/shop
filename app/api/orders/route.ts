@@ -61,32 +61,99 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json();
-  const { total_amount: totalAmount, status } = body;
-  console.log("Body: ", body);
+  // Only customers can create orders
+  if (decoded.role !== "customer") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
-  if (!totalAmount || !status) {
+  const body = await req.json();
+  const { items, total_amount: totalAmount } = body;
+
+  if (!items || !Array.isArray(items) || items.length === 0) {
     return NextResponse.json(
-      { error: "Missing required fields" },
+      { error: "Order must contain at least one item" },
+      { status: 400 }
+    );
+  }
+
+  if (!totalAmount || totalAmount <= 0) {
+    return NextResponse.json(
+      { error: "Invalid total amount" },
       { status: 400 }
     );
   }
 
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("orders")
-    .insert([
-      {
-        user_id: decoded.userId, // Use authenticated user's ID
-        total_amount: totalAmount,
-        status,
-      },
-    ])
-    .select()
-    .single();
+  try {
+    // Start a transaction
+    const { data: order, error: orderError } = await supabase
+      .from("orders")
+      .insert([
+        {
+          user_id: decoded.userId,
+          total_amount: totalAmount,
+          status: "pending", // Default status
+        },
+      ])
+      .select()
+      .single();
 
-  if (error)
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data, { status: 201 });
+    if (orderError) {
+      return NextResponse.json({ error: orderError.message }, { status: 500 });
+    }
+
+    // Create order items
+    const orderItems = items.map((item: any) => ({
+      order_id: order.id,
+      product_id: item.product_id,
+      quantity: item.quantity,
+      price: item.price,
+    }));
+
+    const { error: itemsError } = await supabase
+      .from("order_items")
+      .insert(orderItems);
+
+    if (itemsError) {
+      return NextResponse.json({ error: itemsError.message }, { status: 500 });
+    }
+
+    // Update product quantities (reduce stock)
+    for (const item of items) {
+      // First get current quantity
+      const { data: product, error: getError } = await supabase
+        .from("products")
+        .select("quantity")
+        .eq("id", item.product_id)
+        .single();
+
+      if (getError) {
+        return NextResponse.json({ error: getError.message }, { status: 500 });
+      }
+
+      // Update with new quantity
+      const { error: updateError } = await supabase
+        .from("products")
+        .update({
+          quantity: product.quantity - item.quantity,
+        })
+        .eq("id", item.product_id);
+
+      if (updateError) {
+        return NextResponse.json(
+          { error: updateError.message },
+          { status: 500 }
+        );
+      }
+    }
+
+    return NextResponse.json(order, { status: 201 });
+  } catch (error) {
+    console.error("Error creating order:", error);
+    return NextResponse.json(
+      { error: "Failed to create order" },
+      { status: 500 }
+    );
+  }
 }

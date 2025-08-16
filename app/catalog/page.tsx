@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useAuth } from "../hooks/useAuth";
+import { useCart } from "../contexts/CartContext";
 
 // 🔹 Опис інтерфейсу товару
 interface Product {
@@ -29,6 +31,8 @@ interface ProductsResponse {
 
 export default function CatalogPage() {
   const router = useRouter();
+  const { isAuthenticated, isCustomer, isAdmin } = useAuth();
+  const { addToCart } = useCart();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -183,7 +187,8 @@ export default function CatalogPage() {
           {products.map((p) => (
             <div
               key={p.id}
-              className="bg-white shadow rounded p-4 hover:shadow-lg transition flex flex-col"
+              className="bg-white shadow rounded p-4 hover:shadow-lg transition flex flex-col cursor-pointer"
+              onClick={() => router.push(`/products/${p.id}`)}
             >
               {p.image_url ? (
                 <div className="relative w-full h-24 mb-3">
@@ -203,16 +208,42 @@ export default function CatalogPage() {
               <p className="text-blue-600">{(p.price / 100).toFixed(2)} грн</p>
 
               {/* Блок кнопок, який прилипає до низу */}
-              <div className="mt-auto space-y-2">
+              <div
+                className="mt-auto space-y-2"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <button
                   onClick={() => router.push(`/products/${p.id}`)}
                   className="w-full bg-gray-200 text-black py-1 rounded hover:bg-gray-300 transition"
                 >
                   Деталі товару
                 </button>
-                <button className="w-full bg-blue-600 text-white py-1 rounded hover:bg-blue-700 transition">
-                  Додати в корзину
-                </button>
+                {isCustomer && (
+                  <button
+                    onClick={() =>
+                      addToCart({
+                        id: p.id,
+                        name: p.name,
+                        price: p.price,
+                        image_url: p.image_url,
+                        stock_quantity: p.quantity,
+                      })
+                    }
+                    disabled={p.quantity === 0}
+                    className="w-full bg-blue-600 text-white py-1 rounded hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    Додати в корзину
+                  </button>
+                )}
+                {!isAuthenticated && (
+                  <button
+                    onClick={() => router.push("/auth/login")}
+                    className="w-full bg-blue-600 text-white py-1 rounded hover:bg-blue-700 transition"
+                  >
+                    Додати в корзину
+                  </button>
+                )}
+                {/* Admin users don't see any cart button */}
               </div>
             </div>
           ))}

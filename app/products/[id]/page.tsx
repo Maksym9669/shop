@@ -1,9 +1,11 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useCart } from "../../contexts/CartContext";
+import { useAuth } from "../../hooks/useAuth";
 
 // 🔹 Опис інтерфейсу товару
 interface Product {
@@ -18,6 +20,9 @@ interface Product {
 
 export default function ProductPage() {
   const { id } = useParams();
+  const router = useRouter();
+  const { addToCart } = useCart();
+  const { isAuthenticated, isCustomer, isAdmin } = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -118,12 +123,31 @@ export default function ProductPage() {
 
           {/* Кнопки */}
           <div className="mt-6 flex gap-4">
-            <button
-              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-              disabled={!isAvailable}
-            >
-              Додати в кошик
-            </button>
+            {isCustomer && (
+              <button
+                onClick={() =>
+                  addToCart({
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    image_url: product.image_url,
+                    stock_quantity: product.quantity,
+                  })
+                }
+                disabled={!isAvailable}
+                className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                Додати в кошик
+              </button>
+            )}
+            {!isAuthenticated && (
+              <button
+                onClick={() => router.push("/auth/login")}
+                className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
+              >
+                Увійти для покупок
+              </button>
+            )}
             <Link
               href="/catalog"
               className="px-6 py-2 border text-black border-gray-300 rounded hover:bg-gray-100 transition"
