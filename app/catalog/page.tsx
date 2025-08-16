@@ -2,24 +2,43 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+
+// 🔹 Опис інтерфейсу товару
+interface Product {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  category_id: number;
+  image_url: string | null;
+  quantity: number;
+}
 
 export default function CatalogPage() {
   const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const ProductCategories = {
+    "Ручки та маркери": 1,
+    "Олівці та фломастери": 2,
+    "Зошити та блокноти": 3,
+    Папір: 4,
+    "Папки та файли": 5,
+    "Клей та клейкі матеріали": 6,
+    "Органайзери та архівування": 7,
+    "Настільне приладдя": 8,
+    "Шкільне приладдя": 9,
+    "Офісна техніка та аксесуари": 10,
+  };
+
+  console.log("XDDDD");
+  console.log("XDDDDDD");
 
   // 🔹 Категорії товарів
-  const categories = [
-    "Ручки та маркери",
-    "Олівці та фломастери",
-    "Зошити та блокноти",
-    "Папір",
-    "Папки та файли",
-    "Клей та клейкі матеріали",
-    "Органайзери та архівування",
-    "Настільне приладдя",
-    "Шкільне приладдя",
-    "Офісна техніка та аксесуари",
-  ];
+  const categories = Object.keys(ProductCategories);
 
   // 🔹 Опції сортування
   const sortOptions = [
@@ -30,13 +49,14 @@ export default function CatalogPage() {
     "Знижки",
   ];
 
-  // 🔹 Банери для крутилки
+  // 🔹 Банери
   const banners = [
     { color: "bg-blue-500", text: "Знижки на ручки" },
     { color: "bg-green-500", text: "Новинки в каталозі" },
     { color: "bg-purple-500", text: "Кращі пропозиції місяця" },
   ];
 
+  // 🔹 Крутилка
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % banners.length);
@@ -44,13 +64,22 @@ export default function CatalogPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // 🔹 Тимчасові товари
-  const products = [
-    { id: 1, name: "Ручка синя", price: "25 грн" },
-    { id: 2, name: "Зошит 48 арк.", price: "15 грн" },
-    { id: 3, name: "Папір A4", price: "120 грн" },
-    { id: 4, name: "Клей-олівець", price: "18 грн" },
-  ];
+  // 🔹 Отримання товарів з бекенду
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const res = await fetch("/api/products");
+        if (!res.ok) throw new Error("Помилка завантаження товарів");
+        const data: Product[] = await res.json(); // ✅ явно вказуємо тип
+        setProducts(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProducts();
+  }, []);
 
   return (
     <div>
@@ -78,7 +107,7 @@ export default function CatalogPage() {
         <select
           className="px-3 py-2 rounded border bg-white text-black"
           onChange={(e) => {
-            if (e.target.value) alert(`Сортування: ${e.target.value}`); // поки що просто алерт
+            if (e.target.value) alert(`Сортування: ${e.target.value}`);
           }}
         >
           <option value="">Сортувати</option>
@@ -106,23 +135,49 @@ export default function CatalogPage() {
 
       {/* 🔹 Сітка товарів */}
       <h1 className="text-3xl font-bold mb-6">Каталог товарів</h1>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {products.map((p) => (
-          <div
-            key={p.id}
-            className="bg-white shadow rounded p-4 hover:shadow-lg transition"
-          >
-            <div className="h-24 bg-gray-200 mb-3 flex items-center justify-center text-gray-500">
-              Фото
+
+      {loading ? (
+        <p>Завантаження товарів...</p>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {products.map((p) => (
+            <div
+              key={p.id}
+              className="bg-white shadow rounded p-4 hover:shadow-lg transition flex flex-col"
+            >
+              {p.image_url ? (
+                <div className="relative w-full h-24 mb-3">
+                  <Image
+                    src={p.image_url}
+                    alt={p.name}
+                    fill
+                    className="object-contain rounded"
+                  />
+                </div>
+              ) : (
+                <div className="h-24 bg-gray-200 mb-3 flex items-center justify-center text-gray-500">
+                  Фото
+                </div>
+              )}
+              <h3 className="font-bold">{p.name}</h3>
+              <p className="text-blue-600">{(p.price / 100).toFixed(2)} грн</p>
+
+              {/* Блок кнопок, який прилипає до низу */}
+              <div className="mt-auto space-y-2">
+                <button
+                  onClick={() => router.push(`/products/${p.id}`)}
+                  className="w-full bg-gray-200 text-black py-1 rounded hover:bg-gray-300 transition"
+                >
+                  Деталі товару
+                </button>
+                <button className="w-full bg-blue-600 text-white py-1 rounded hover:bg-blue-700 transition">
+                  Додати в корзину
+                </button>
+              </div>
             </div>
-            <h3 className="font-bold">{p.name}</h3>
-            <p className="text-blue-600">{p.price}</p>
-            <button className="mt-2 w-full bg-blue-600 text-white py-1 rounded hover:bg-blue-700 transition">
-              Додати в корзину
-            </button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
