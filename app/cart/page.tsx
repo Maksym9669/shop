@@ -12,6 +12,7 @@ export default function CartPage() {
   const { isAuthenticated, isCustomer } = useAuth();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAddressWarning, setShowAddressWarning] = useState(false);
 
   const handleCheckout = async () => {
     if (!isAuthenticated || !isCustomer) {
@@ -26,9 +27,32 @@ export default function CartPage() {
 
     setIsSubmitting(true);
     try {
-      console.log("XXXXXXXXXXXXXXXXXXXXx");
+      // Check if user has shipping addresses
+      const addressCheckResponse = await fetch(
+        "/api/shipping-addresses/check",
+        {
+          credentials: "include",
+        }
+      );
 
-      // First create the order
+      if (!addressCheckResponse.ok) {
+        alert("Помилка перевірки адрес доставки");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const { hasCompleteAddress } = await addressCheckResponse.json();
+
+      if (!hasCompleteAddress) {
+        setShowAddressWarning(true);
+        setIsSubmitting(false);
+        setTimeout(() => {
+          router.push("/profile?from=cart");
+        }, 2000);
+        return;
+      }
+
+      // Create the order
       const orderResponse = await fetch("/api/orders", {
         method: "POST",
         headers: {
@@ -43,8 +67,6 @@ export default function CartPage() {
           total_amount: getCartTotal(),
         }),
       });
-
-      console.log("EEEEEEEEEEEEEEEEEEEEEEEE");
 
       if (!orderResponse.ok) {
         const error = await orderResponse.json();
@@ -133,6 +155,21 @@ export default function CartPage() {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Корзина</h1>
+
+      {showAddressWarning && (
+        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-6">
+          <div className="flex items-center">
+            <span className="text-yellow-500 mr-2">⚠️</span>
+            <div>
+              <p className="font-semibold">Потрібна повна адреса доставки</p>
+              <p className="text-sm">
+                Перед оформленням замовлення потрібно додати повну адресу
+                доставки з усіма обов'язковими полями. Переходимо до профілю...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white shadow rounded-lg">
         {cartItems.map((item) => (

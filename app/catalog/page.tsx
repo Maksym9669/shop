@@ -184,69 +184,95 @@ export default function CatalogPage() {
         <p>Завантаження товарів...</p>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {products.map((p) => (
-            <div
-              key={p.id}
-              className="bg-white shadow rounded p-4 hover:shadow-lg transition flex flex-col cursor-pointer"
-              onClick={() => router.push(`/products/${p.id}`)}
-            >
-              {p.image_url ? (
-                <div className="relative w-full h-24 mb-3">
-                  <Image
-                    src={p.image_url}
-                    alt={p.name}
-                    fill
-                    className="object-contain rounded"
-                  />
-                </div>
-              ) : (
-                <div className="h-24 bg-gray-200 mb-3 flex items-center justify-center text-gray-500">
-                  Фото
-                </div>
-              )}
-              <h3 className="font-bold">{p.name}</h3>
-              <p className="text-blue-600">{(p.price / 100).toFixed(2)} грн</p>
-
-              {/* Блок кнопок, який прилипає до низу */}
+          {products.map((p) => {
+            const isOutOfStock = p.quantity < 1;
+            return (
               <div
-                className="mt-auto space-y-2"
-                onClick={(e) => e.stopPropagation()}
+                key={p.id}
+                className={`bg-white shadow rounded p-4 hover:shadow-lg transition flex flex-col cursor-pointer relative ${
+                  isOutOfStock ? "opacity-60" : ""
+                }`}
+                onClick={() => router.push(`/products/${p.id}`)}
               >
-                <button
-                  onClick={() => router.push(`/products/${p.id}`)}
-                  className="w-full bg-gray-200 text-black py-1 rounded hover:bg-gray-300 transition"
+                {isOutOfStock && (
+                  <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center rounded z-10">
+                    <span className="bg-red-600 text-white px-3 py-1 rounded-lg font-bold text-sm">
+                      Немає в наявності
+                    </span>
+                  </div>
+                )}
+
+                {p.image_url ? (
+                  <div className="relative w-full h-24 mb-3">
+                    <Image
+                      src={p.image_url}
+                      alt={p.name}
+                      fill
+                      className="object-contain rounded"
+                    />
+                  </div>
+                ) : (
+                  <div className="h-24 bg-gray-200 mb-3 flex items-center justify-center text-gray-500">
+                    Фото
+                  </div>
+                )}
+                <h3 className="font-bold">{p.name}</h3>
+                <p className="text-blue-600">
+                  {(p.price / 100).toFixed(2)} грн
+                </p>
+                {isOutOfStock && (
+                  <p className="text-red-600 text-sm font-medium">
+                    Закінчився на складі
+                  </p>
+                )}
+
+                {/* Блок кнопок, який прилипає до низу */}
+                <div
+                  className="mt-auto space-y-2"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  Деталі товару
-                </button>
-                {isCustomer && (
                   <button
-                    onClick={() =>
-                      addToCart({
-                        id: p.id,
-                        name: p.name,
-                        price: p.price,
-                        image_url: p.image_url,
-                        stock_quantity: p.quantity,
-                      })
-                    }
-                    disabled={p.quantity === 0}
-                    className="w-full bg-blue-600 text-white py-1 rounded hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    onClick={() => router.push(`/products/${p.id}`)}
+                    className="w-full bg-gray-200 text-black py-1 rounded hover:bg-gray-300 transition"
                   >
-                    Додати в корзину
+                    Деталі товару
                   </button>
-                )}
-                {!isAuthenticated && (
-                  <button
-                    onClick={() => router.push("/auth/login")}
-                    className="w-full bg-blue-600 text-white py-1 rounded hover:bg-blue-700 transition"
-                  >
-                    Додати в корзину
-                  </button>
-                )}
-                {/* Admin users don't see any cart button */}
+                  {isCustomer && (
+                    <button
+                      onClick={() => {
+                        if (!isOutOfStock) {
+                          addToCart({
+                            id: p.id,
+                            name: p.name,
+                            price: p.price,
+                            image_url: p.image_url,
+                            stock_quantity: p.quantity,
+                          });
+                        }
+                      }}
+                      disabled={isOutOfStock}
+                      className={`w-full py-1 rounded transition ${
+                        isOutOfStock
+                          ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                          : "bg-blue-600 text-white hover:bg-blue-700"
+                      }`}
+                    >
+                      {isOutOfStock ? "Немає в наявності" : "Додати в корзину"}
+                    </button>
+                  )}
+                  {!isAuthenticated && (
+                    <button
+                      onClick={() => router.push("/auth/login")}
+                      className="w-full bg-blue-600 text-white py-1 rounded hover:bg-blue-700 transition"
+                    >
+                      Додати в корзину
+                    </button>
+                  )}
+                  {/* Admin users don't see any cart button */}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

@@ -81,20 +81,36 @@ export default function ProductPage() {
   const isAvailable = product.quantity > 0;
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white shadow-md rounded">
+    <div
+      className={`max-w-4xl mx-auto p-6 bg-white shadow-md rounded relative ${
+        !isAvailable ? "opacity-75" : ""
+      }`}
+    >
+      {!isAvailable && (
+        <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center rounded z-10 pointer-events-none">
+          <span className="bg-red-600 text-white px-6 py-3 rounded-lg font-bold text-lg shadow-lg">
+            НЕМАЄ В НАЯВНОСТІ
+          </span>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row gap-6">
         {/* Фото */}
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 relative">
           {product.image_url ? (
             <Image
               src={product.image_url}
               alt={product.name}
               width={300}
               height={200}
-              className="rounded border"
+              className={`rounded border ${!isAvailable ? "grayscale" : ""}`}
             />
           ) : (
-            <div className="w-[300px] h-[200px] bg-gray-200 rounded border flex items-center justify-center text-gray-500">
+            <div
+              className={`w-[300px] h-[200px] bg-gray-200 rounded border flex items-center justify-center text-gray-500 ${
+                !isAvailable ? "bg-gray-300" : ""
+              }`}
+            >
               Фото товару
             </div>
           )}
@@ -125,19 +141,25 @@ export default function ProductPage() {
           <div className="mt-6 flex gap-4">
             {isCustomer && (
               <button
-                onClick={() =>
-                  addToCart({
-                    id: product.id,
-                    name: product.name,
-                    price: product.price,
-                    image_url: product.image_url,
-                    stock_quantity: product.quantity,
-                  })
-                }
+                onClick={() => {
+                  if (isAvailable) {
+                    addToCart({
+                      id: product.id,
+                      name: product.name,
+                      price: product.price,
+                      image_url: product.image_url,
+                      stock_quantity: product.quantity,
+                    });
+                  }
+                }}
                 disabled={!isAvailable}
-                className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className={`px-6 py-2 rounded transition ${
+                  !isAvailable
+                    ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
+                }`}
               >
-                Додати в кошик
+                {!isAvailable ? "Немає в наявності" : "Додати в кошик"}
               </button>
             )}
             {!isAuthenticated && (

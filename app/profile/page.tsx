@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import ConfirmModal from "../components/ConfirmModal";
 
 interface UserProfile {
   id: string;
@@ -32,6 +33,7 @@ interface ShippingAddress {
 
 export default function ProfilePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [addresses, setAddresses] = useState<ShippingAddress[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,6 +66,9 @@ export default function ProfilePage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [successMessage, setSuccessMessage] = useState("");
+  const fromCart = searchParams.get("from") === "cart";
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [addressToDelete, setAddressToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProfile();
@@ -177,10 +182,20 @@ export default function ProfilePage() {
         setShowAddressForm(false);
         setEditingAddress(null);
         resetAddressForm();
-        setSuccessMessage(
-          editingAddress ? "Адреса успішно оновлена!" : "Адреса успішно додана!"
-        );
-        setTimeout(() => setSuccessMessage(""), 3000);
+
+        if (fromCart && !editingAddress) {
+          setSuccessMessage(
+            "Повна адреса додана! Тепер можете повернутися до корзини для оформлення замовлення."
+          );
+        } else {
+          setSuccessMessage(
+            editingAddress
+              ? "Адреса успішно оновлена!"
+              : "Адреса успішно додана!"
+          );
+        }
+
+        setTimeout(() => setSuccessMessage(""), 5000);
       } else {
         setErrors({ address: data.error || "Помилка збереження адреси" });
       }
@@ -191,14 +206,22 @@ export default function ProfilePage() {
     }
   };
 
-  const handleDeleteAddress = async (addressId: string) => {
-    if (!confirm("Ви впевнені, що хочете видалити цю адресу?")) return;
+  const openDeleteModal = (addressId: string) => {
+    setAddressToDelete(addressId);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteAddress = async () => {
+    if (!addressToDelete) return;
 
     try {
-      const response = await fetch(`/api/shipping-addresses/${addressId}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
+      const response = await fetch(
+        `/api/shipping-addresses/${addressToDelete}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
 
       if (response.ok) {
         await fetchAddresses();
@@ -207,6 +230,8 @@ export default function ProfilePage() {
       }
     } catch (error) {
       console.error("Error deleting address:", error);
+    } finally {
+      setAddressToDelete(null);
     }
   };
 
@@ -266,9 +291,37 @@ export default function ProfilePage() {
     <div className="max-w-4xl mx-auto p-6 space-y-8">
       <h1 className="text-3xl font-bold text-gray-800">Мій профіль</h1>
 
+      {fromCart && (
+        <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded">
+          <div className="flex items-center">
+            <span className="text-blue-500 mr-2">📦</span>
+            <div>
+              <p className="font-semibold">Потрібна повна адреса доставки</p>
+              <p className="text-sm">
+                Для оформлення замовлення додайте повну адресу доставки з усіма
+                обов'язковими полями (ім'я, прізвище, адреса, місто, індекс,
+                країна), після чого зможете повернутися до корзини для
+                завершення покупки.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {successMessage && (
         <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-          {successMessage}
+          <div className="flex justify-between items-center">
+            <span>{successMessage}</span>
+            {fromCart &&
+              successMessage.includes("Тепер можете повернутися") && (
+                <button
+                  onClick={() => router.push("/cart")}
+                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition text-sm"
+                >
+                  Повернутися до корзини
+                </button>
+              )}
+          </div>
         </div>
       )}
 
@@ -380,63 +433,86 @@ export default function ProfilePage() {
           </p>
         ) : (
           <div className="space-y-4">
-            {addresses.map((address) => (
-              <div
-                key={address.id}
-                className={`border rounded-lg p-4 ${
-                  address.is_default
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200"
-                }`}
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    {address.is_default && (
-                      <span className="inline-block bg-blue-500 text-white text-xs px-2 py-1 rounded mb-2">
-                        За замовчуванням
-                      </span>
-                    )}
-                    <div className="space-y-1">
-                      <p className="font-medium">
-                        {address.first_name} {address.last_name}
-                      </p>
-                      {address.company && (
-                        <p className="text-gray-600">{address.company}</p>
-                      )}
-                      <p className="text-gray-600">{address.address_line_1}</p>
-                      {address.address_line_2 && (
-                        <p className="text-gray-600">
-                          {address.address_line_2}
+            {addresses.map((address) => {
+              const isComplete =
+                address.first_name &&
+                address.last_name &&
+                address.address_line_1 &&
+                address.city &&
+                address.postal_code &&
+                address.country;
+
+              return (
+                <div
+                  key={address.id}
+                  className={`border rounded-lg p-4 ${
+                    address.is_default
+                      ? "border-blue-500 bg-blue-50"
+                      : isComplete
+                      ? "border-gray-200"
+                      : "border-yellow-400 bg-yellow-50"
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {address.is_default && (
+                          <span className="inline-block bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                            За замовчуванням
+                          </span>
+                        )}
+                        {!isComplete && (
+                          <span className="inline-block bg-yellow-500 text-white text-xs px-2 py-1 rounded">
+                            Неповна адреса
+                          </span>
+                        )}
+                      </div>
+                      <div className="space-y-1">
+                        <p className="font-medium">
+                          {address.first_name} {address.last_name}
                         </p>
-                      )}
-                      <p className="text-gray-600">
-                        {address.city}
-                        {address.state && `, ${address.state}`}{" "}
-                        {address.postal_code}
-                      </p>
-                      <p className="text-gray-600">{address.country}</p>
-                      {address.phone_number && (
-                        <p className="text-gray-600">{address.phone_number}</p>
-                      )}
+                        {address.company && (
+                          <p className="text-gray-600">{address.company}</p>
+                        )}
+                        <p className="text-gray-600">
+                          {address.address_line_1}
+                        </p>
+                        {address.address_line_2 && (
+                          <p className="text-gray-600">
+                            {address.address_line_2}
+                          </p>
+                        )}
+                        <p className="text-gray-600">
+                          {address.city}
+                          {address.state && `, ${address.state}`}{" "}
+                          {address.postal_code}
+                        </p>
+                        <p className="text-gray-600">{address.country}</p>
+                        {address.phone_number && (
+                          <p className="text-gray-600">
+                            {address.phone_number}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => startEditingAddress(address)}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        Редагувати
+                      </button>
+                      <button
+                        onClick={() => openDeleteModal(address.id)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        Видалити
+                      </button>
                     </div>
                   </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => startEditingAddress(address)}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      Редагувати
-                    </button>
-                    <button
-                      onClick={() => handleDeleteAddress(address.id)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      Видалити
-                    </button>
-                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -693,6 +769,21 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setAddressToDelete(null);
+        }}
+        onConfirm={handleDeleteAddress}
+        title="Видалити адресу"
+        message="Ви впевнені, що хочете видалити цю адресу доставки? Цю дію неможливо скасувати."
+        confirmText="Видалити"
+        cancelText="Скасувати"
+        type="danger"
+      />
     </div>
   );
 }
