@@ -109,8 +109,19 @@ export default function Navigation() {
       )}
 
       {user && (
-        <li className="text-black text-base sm:text-sm xs:text-xs">
-          Ласкаво просимо,&nbsp;{user.fullName}
+        <li>
+          <Link
+            href="/profile"
+            className={`transition-colors ${
+              pathname === "/profile"
+                ? "text-blue-600 border-b-2 border-blue-600"
+                : "text-black hover:text-blue-600"
+            }`}
+          >
+            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm hover:bg-blue-700 transition-colors">
+              {user.fullName.charAt(0).toUpperCase()}
+            </div>
+          </Link>
         </li>
       )}
     </ul>

@@ -26,7 +26,10 @@ export default function CartPage() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch("/api/orders", {
+      console.log("XXXXXXXXXXXXXXXXXXXXx");
+
+      // First create the order
+      const orderResponse = await fetch("/api/orders", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -41,18 +44,51 @@ export default function CartPage() {
         }),
       });
 
-      if (response.ok) {
-        const order = await response.json();
-        clearCart();
-        alert(`Замовлення створено! Номер замовлення: ${order.id}`);
-        router.push("/");
-      } else {
-        const error = await response.json();
-        alert(`Помилка: ${error.error}`);
+      console.log("EEEEEEEEEEEEEEEEEEEEEEEE");
+
+      if (!orderResponse.ok) {
+        const error = await orderResponse.json();
+        throw new Error(error.error);
       }
+
+      const order = await orderResponse.json();
+
+      console.log("DDDDDDDDDDDDDDDDDDDDDDD");
+
+      // Then initiate payment with LiqPay
+      const paymentResponse = await fetch("/api/payments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          order_id: order.id,
+          amount: getCartTotal() / 100, // Convert from cents to hryvnias
+          description: `Замовлення #${order.id} - ${cartItems.length} товарів`,
+        }),
+      });
+
+      console.log("AAAAAAAAAAAAAAAAAAAAAaa");
+      if (!paymentResponse.ok) {
+        const error = await paymentResponse.json();
+        throw new Error(error.error);
+      }
+
+      console.log("BBBBBBBBBBBBBBBBBBBBBBBBB");
+
+      const paymentData = await paymentResponse.json();
+
+      console.log("CCCCCCCCCCCCCCCCCCCCCCC");
+
+      // Redirect to LiqPay payment page
+      window.location.href = paymentData.payment_url;
     } catch (error) {
-      console.error("Error creating order:", error);
-      alert("Помилка при створенні замовлення");
+      console.error("Error during checkout:", error);
+      alert(
+        `Помилка при оформленні замовлення: ${
+          error instanceof Error ? error.message : "Невідома помилка"
+        }`
+      );
     } finally {
       setIsSubmitting(false);
     }
