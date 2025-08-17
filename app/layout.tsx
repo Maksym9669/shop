@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Navigation from "./components/Navigation";
 import { CartProvider } from "./contexts/CartContext";
 import { CartToast } from "./components/CartToast";
+import Footer from "./components/Footer";
 
 export const metadata: Metadata = {
   title: "Shop App",
@@ -40,40 +41,7 @@ export default function RootLayout({
 
           <main className="flex-1 container mx-auto p-6">{children}</main>
 
-          {/* 🔹 Footer */}
-          <footer className="bg-gray-800 text-gray-300 text-sm py-4 mt-auto">
-            <div className="container mx-auto flex flex-col items-center">
-              <div className="mb-2">
-                <Link href="/" className="mx-2 hover:text-white">
-                  Головна
-                </Link>
-                <Link href="/catalog" className="mx-2 hover:text-white">
-                  Каталог
-                </Link>
-                <Link href="/about" className="mx-2 hover:text-white">
-                  Про нас
-                </Link>
-                <Link href="/contact" className="mx-2 hover:text-white">
-                  Контакти
-                </Link>
-              </div>
-              <div className="mb-2">
-                <span className="mx-2">© 2025 Shop App</span>
-                <Link
-                  href="https://facebook.com"
-                  className="mx-2 hover:text-white"
-                >
-                  Facebook
-                </Link>
-                <Link
-                  href="https://instagram.com"
-                  className="mx-2 hover:text-white"
-                >
-                  Instagram
-                </Link>
-              </div>
-            </div>
-          </footer>
+          <Footer />
         </CartProvider>
       </body>
     </html>
