@@ -15,6 +15,15 @@ interface Product {
   category_id: number;
   image_url: string | null;
   quantity: number;
+  discounted_price?: number;
+  discount_amount?: number;
+  discount_percentage?: number;
+  discount?: {
+    id: number;
+    name: string;
+    type: "percentage" | "fixed";
+    value: number;
+  };
 }
 
 interface PaginationInfo {
@@ -217,9 +226,35 @@ export default function CatalogPage() {
                   </div>
                 )}
                 <h3 className="font-bold">{p.name}</h3>
-                <p className="text-blue-600">
-                  {(p.price / 100).toFixed(2)} грн
-                </p>
+
+                {/* Price with discount display */}
+                <div className="mb-2">
+                  {p.discount_amount && p.discount_amount > 0 ? (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-blue-600 font-bold text-lg">
+                          {((p.discounted_price || p.price) / 100).toFixed(2)}{" "}
+                          грн
+                        </span>
+                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded">
+                          -{p.discount_percentage}%
+                        </span>
+                      </div>
+                      <div className="text-gray-500 line-through text-sm">
+                        {(p.price / 100).toFixed(2)} грн
+                      </div>
+                      {p.discount && (
+                        <div className="text-green-600 text-xs font-medium">
+                          {p.discount.name}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-blue-600 font-bold text-lg">
+                      {(p.price / 100).toFixed(2)} грн
+                    </p>
+                  )}
+                </div>
                 {isOutOfStock && (
                   <p className="text-red-600 text-sm font-medium">
                     Закінчився на складі
@@ -244,7 +279,9 @@ export default function CatalogPage() {
                           addToCart({
                             id: p.id,
                             name: p.name,
-                            price: p.price,
+                            price: p.discounted_price || p.price,
+                            original_price: p.price,
+                            discount_amount: p.discount_amount || 0,
                             image_url: p.image_url,
                             stock_quantity: p.quantity,
                           });

@@ -44,6 +44,7 @@ export default function Navigation() {
   const commonLinks = [
     { href: "/", label: "Головна" },
     { href: "/catalog", label: "Каталог" },
+    { href: "/specials", label: "🔥 Акції" },
     { href: "/about", label: "Про нас" },
     { href: "/contact", label: "Контакти" },
   ];

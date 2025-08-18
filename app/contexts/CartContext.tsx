@@ -11,7 +11,9 @@ import React, {
 interface CartItem {
   id: number;
   name: string;
-  price: number;
+  price: number; // This will be the discounted price
+  original_price?: number; // Original price before discount
+  discount_amount?: number; // Discount amount in kopecks
   image_url: string | null;
   quantity: number;
   stock_quantity: number;
@@ -25,6 +27,8 @@ interface CartContextType {
   clearCart: () => void;
   getCartTotal: () => number;
   getCartCount: () => number;
+  getTotalSavings: () => number;
+  getOriginalTotal: () => number;
   showToast: (message: string) => void;
   hideToast: () => void;
   toastMessage: string;
@@ -117,6 +121,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return cartItems.reduce((count, item) => count + item.quantity, 0);
   };
 
+  const getTotalSavings = (): number => {
+    return cartItems.reduce((total, item) => {
+      const savings = (item.discount_amount || 0) * item.quantity;
+      return total + savings;
+    }, 0);
+  };
+
+  const getOriginalTotal = (): number => {
+    return cartItems.reduce((total, item) => {
+      const originalPrice = item.original_price || item.price;
+      return total + originalPrice * item.quantity;
+    }, 0);
+  };
+
   const showToast = (message: string) => {
     setToastMessage(message);
     setIsToastVisible(true);
@@ -136,6 +154,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         clearCart,
         getCartTotal,
         getCartCount,
+        getTotalSavings,
+        getOriginalTotal,
         showToast,
         hideToast,
         toastMessage,

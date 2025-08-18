@@ -16,6 +16,15 @@ interface Product {
   category_id: number;
   image_url: string | null;
   quantity: number;
+  discounted_price?: number;
+  discount_amount?: number;
+  discount_percentage?: number;
+  discount?: {
+    id: number;
+    name: string;
+    type: "percentage" | "fixed";
+    value: number;
+  };
 }
 
 export default function ProductPage() {
@@ -122,9 +131,41 @@ export default function ProductPage() {
             <h1 className="text-3xl font-bold text-gray-800 mb-2">
               {product.name}
             </h1>
-            <p className="text-xl text-blue-600 font-semibold mb-4">
-              {(product.price / 100).toFixed(2)} грн
-            </p>
+
+            {/* Price with discount display */}
+            <div className="mb-4">
+              {product.discount_amount && product.discount_amount > 0 ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl text-blue-600 font-bold">
+                      {(
+                        (product.discounted_price || product.price) / 100
+                      ).toFixed(2)}{" "}
+                      грн
+                    </span>
+                    <span className="bg-red-500 text-white text-sm px-3 py-1 rounded-full">
+                      -{product.discount_percentage}% знижка
+                    </span>
+                  </div>
+                  <div className="text-gray-500 line-through text-lg">
+                    Була ціна: {(product.price / 100).toFixed(2)} грн
+                  </div>
+                  <div className="text-green-600 font-medium">
+                    Ви економите:{" "}
+                    {((product.discount_amount || 0) / 100).toFixed(2)} грн
+                  </div>
+                  {product.discount && (
+                    <div className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
+                      📢 {product.discount.name}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-2xl text-blue-600 font-bold">
+                  {(product.price / 100).toFixed(2)} грн
+                </p>
+              )}
+            </div>
             <p className="text-gray-600 mb-6">{product.description}</p>
             <p
               className={`font-medium ${
@@ -146,7 +187,9 @@ export default function ProductPage() {
                     addToCart({
                       id: product.id,
                       name: product.name,
-                      price: product.price,
+                      price: product.discounted_price || product.price,
+                      original_price: product.price,
+                      discount_amount: product.discount_amount || 0,
                       image_url: product.image_url,
                       stock_quantity: product.quantity,
                     });

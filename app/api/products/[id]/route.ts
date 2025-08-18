@@ -3,6 +3,7 @@ import { createClient } from "../../../../lib/supabase/server";
 import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { s3 } from "../../../../lib/s3";
 import jwt from "jsonwebtoken";
+import { applyDiscountsToProducts } from "../../../../lib/discount-utils";
 
 export async function PATCH(
   req: NextRequest,
@@ -191,11 +192,34 @@ export async function GET(
   const supabase = await createClient();
   const { data: product, error } = await supabase
     .from("products")
-    .select("*")
+    .select(
+      `
+      *,
+      product_discounts!left (
+        discount_id,
+        discounts!inner (
+          id,
+          name,
+          type,
+          value,
+          start_date,
+          end_date,
+          is_active,
+          min_amount,
+          max_amount,
+          usage_limit,
+          usage_count
+        )
+      )
+    `
+    )
     .eq("id", id)
     .single();
 
   if (error) {
+    if (error.code === "PGRST116") {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
@@ -203,5 +227,24 @@ export async function GET(
     return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
 
-  return NextResponse.json(product);
+  // Process product to extract and apply active discounts
+  const activeDiscounts =
+    product.product_discounts
+      ?.map((pd) => pd.discounts)
+      .filter(
+        (discount) =>
+          discount?.is_active &&
+          new Date(discount.start_date) <= new Date() &&
+          new Date(discount.end_date) >= new Date()
+      ) || [];
+
+  const productWithDiscounts = {
+    ...product,
+    discounts: activeDiscounts,
+  };
+
+  // Apply discount calculations
+  const [processedProduct] = applyDiscountsToProducts([productWithDiscounts]);
+
+  return NextResponse.json(processedProduct);
 }

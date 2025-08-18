@@ -3,6 +3,7 @@ import { createClient } from "../../../lib/supabase/server";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { s3 } from "../../../lib/s3";
 import jwt from "jsonwebtoken";
+import { applyDiscountsToProducts } from "../../../lib/discount-utils";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -15,7 +16,29 @@ export async function GET(req: NextRequest) {
   const offset = (page - 1) * limit;
 
   const supabase = await createClient();
-  let query = supabase.from("products").select("*");
+
+  // Get current timestamp for active discount filtering
+  const now = new Date().toISOString();
+
+  let query = supabase.from("products").select(`
+    *,
+    product_discounts!left (
+      discount_id,
+      discounts!inner (
+        id,
+        name,
+        type,
+        value,
+        start_date,
+        end_date,
+        is_active,
+        min_amount,
+        max_amount,
+        usage_limit,
+        usage_count
+      )
+    )
+  `);
 
   // Apply category filter
   if (categoryId) {
@@ -66,8 +89,30 @@ export async function GET(req: NextRequest) {
 
   const { count: totalCount } = await countQuery;
 
+  // Process products to extract and apply active discounts
+  const processedProducts =
+    data?.map((product) => {
+      const activeDiscounts =
+        product.product_discounts
+          ?.map((pd) => pd.discounts)
+          .filter(
+            (discount) =>
+              discount?.is_active &&
+              new Date(discount.start_date) <= new Date() &&
+              new Date(discount.end_date) >= new Date()
+          ) || [];
+
+      return {
+        ...product,
+        discounts: activeDiscounts,
+      };
+    }) || [];
+
+  // Apply discount calculations
+  const productsWithDiscounts = applyDiscountsToProducts(processedProducts);
+
   return NextResponse.json({
-    data,
+    data: productsWithDiscounts,
     pagination: {
       page,
       limit,

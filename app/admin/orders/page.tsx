@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import AdminNavigation from "../../components/AdminNavigation";
+import Pagination from "../../components/Pagination";
 
 interface Order {
   id: string;
@@ -33,10 +35,61 @@ const sampleOrders: Order[] = [
     status: "Виконано",
     date: "2025-08-01",
   },
+  {
+    id: "1004",
+    customer: "Анна Коваленко",
+    total: 890,
+    status: "Відвантажено",
+    date: "2025-07-30",
+  },
+  {
+    id: "1005",
+    customer: "Петро Мельник",
+    total: 450,
+    status: "Очікує",
+    date: "2025-07-29",
+  },
+  {
+    id: "1006",
+    customer: "Марія Іваненко",
+    total: 1750,
+    status: "В обробці",
+    date: "2025-07-28",
+  },
+  {
+    id: "1007",
+    customer: "Андрій Білий",
+    total: 320,
+    status: "Виконано",
+    date: "2025-07-27",
+  },
+  {
+    id: "1008",
+    customer: "Тетяна Левченко",
+    total: 680,
+    status: "Відвантажено",
+    date: "2025-07-26",
+  },
+  {
+    id: "1009",
+    customer: "Олексій Ткач",
+    total: 1150,
+    status: "В обробці",
+    date: "2025-07-25",
+  },
+  {
+    id: "1010",
+    customer: "Світлана Гриценко",
+    total: 480,
+    status: "Очікує",
+    date: "2025-07-24",
+  },
 ];
 
 export default function AdminOrders() {
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5); // Orders per page
   const router = useRouter();
 
   useEffect(() => {
@@ -70,38 +123,20 @@ export default function AdminOrders() {
 
   if (loading) return <div className="p-6">⏳ Перевірка доступу...</div>;
 
-  const handlePageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const path = e.target.value;
-    if (path) router.push(path);
+  // Calculate pagination for sample data
+  const totalItems = sampleOrders.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentOrders = sampleOrders.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
-      {/* Sidebar for desktop (md+) */}
-      <div className="hidden md:block p-4 bg-white shadow h-full w-64">
-        <select
-          className="w-full p-2 border rounded"
-          onChange={handlePageChange}
-          defaultValue="/admin/orders"
-        >
-          <option value="/admin/dashboard">📊 Дашборд</option>
-          <option value="/admin/products">📦 Товари</option>
-          <option value="/admin/orders">🛒 Замовлення</option>
-        </select>
-      </div>
-
-      {/* Dropdown above content on mobile (<md) */}
-      <div className="block md:hidden p-4 bg-white shadow">
-        <select
-          className="w-full p-2 border rounded"
-          onChange={handlePageChange}
-          defaultValue="/admin/orders"
-        >
-          <option value="/admin/dashboard">📊 Дашборд</option>
-          <option value="/admin/products">📦 Товари</option>
-          <option value="/admin/orders">🛒 Замовлення</option>
-        </select>
-      </div>
+      <AdminNavigation />
 
       {/* Main Content */}
       <div className="flex-1 max-w-6xl mx-auto p-6 bg-white rounded shadow m-6">
@@ -122,7 +157,7 @@ export default function AdminOrders() {
             </tr>
           </thead>
           <tbody>
-            {sampleOrders.map((o) => (
+            {currentOrders.map((o) => (
               <tr key={o.id} className="hover:bg-gray-50 cursor-pointer">
                 <td className="border border-gray-300 p-2">{o.id}</td>
                 <td className="border border-gray-300 p-2">{o.customer}</td>
@@ -135,6 +170,15 @@ export default function AdminOrders() {
             ))}
           </tbody>
         </table>
+
+        {/* Pagination */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          itemsPerPage={itemsPerPage}
+          totalItems={totalItems}
+        />
       </div>
     </div>
   );

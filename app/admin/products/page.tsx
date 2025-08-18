@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import AdminNavigation from "../../components/AdminNavigation";
+import Pagination from "../../components/Pagination";
 
 interface Product {
   id: string;
@@ -16,6 +18,10 @@ export default function AdminProducts() {
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteName, setDeleteName] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage] = useState(10); // Items per page
   const router = useRouter();
 
   useEffect(() => {
@@ -37,11 +43,18 @@ export default function AdminProducts() {
           return;
         }
 
-        const data = await fetch("/api/products", { credentials: "include" });
+        const data = await fetch(
+          `/api/products?page=${currentPage}&limit=${itemsPerPage}`,
+          {
+            credentials: "include",
+          }
+        );
         if (!data.ok) throw new Error("Failed to fetch products");
 
-        const products = await data.json();
-        setProducts(products);
+        const response = await data.json();
+        setProducts(response.data || []);
+        setTotalPages(response.pagination?.totalPages || 1);
+        setTotalItems(response.pagination?.total || 0);
       } catch (err) {
         console.error(err);
       } finally {
@@ -50,7 +63,11 @@ export default function AdminProducts() {
     };
 
     checkAuthAndLoad();
-  }, [router]);
+  }, [router, currentPage, itemsPerPage]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   async function handleDeleteConfirm() {
     if (!deleteId) return;
@@ -75,38 +92,9 @@ export default function AdminProducts() {
     return <div className="p-6">Завантаження...</div>;
   }
 
-  const handlePageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const path = e.target.value;
-    if (path) router.push(path);
-  };
-
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
-      {/* Sidebar for desktop (md+) */}
-      <div className="hidden md:block p-4 bg-white shadow h-full w-64">
-        <select
-          className="w-full p-2 border rounded"
-          onChange={handlePageChange}
-          defaultValue="/admin/products"
-        >
-          <option value="/admin/">📊 Дашборд</option>
-          <option value="/admin/products">📦 Товари</option>
-          <option value="/admin/orders">🛒 Замовлення</option>
-        </select>
-      </div>
-
-      {/* Dropdown above content on mobile (<md) */}
-      <div className="block md:hidden p-4 bg-white shadow">
-        <select
-          className="w-full p-2 border rounded"
-          onChange={handlePageChange}
-          defaultValue="/admin/products"
-        >
-          <option value="/admin/">📊 Дашборд</option>
-          <option value="/admin/products">📦 Товари</option>
-          <option value="/admin/orders">🛒 Замовлення</option>
-        </select>
-      </div>
+      <AdminNavigation />
 
       {/* Main Content */}
       {/* Main Content */}
@@ -194,6 +182,15 @@ export default function AdminProducts() {
             </div>
           </div>
         )}
+
+        {/* Pagination */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          itemsPerPage={itemsPerPage}
+          totalItems={totalItems}
+        />
       </div>
     </div>
   );

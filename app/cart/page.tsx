@@ -7,8 +7,15 @@ import Image from "next/image";
 import { useState } from "react";
 
 export default function CartPage() {
-  const { cartItems, removeFromCart, updateQuantity, getCartTotal, clearCart } =
-    useCart();
+  const {
+    cartItems,
+    removeFromCart,
+    updateQuantity,
+    getCartTotal,
+    clearCart,
+    getTotalSavings,
+    getOriginalTotal,
+  } = useCart();
   const { isAuthenticated, isCustomer } = useAuth();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -199,9 +206,24 @@ export default function CartPage() {
             {/* Product Info */}
             <div className="flex-1">
               <h3 className="font-semibold text-lg">{item.name}</h3>
-              <p className="text-gray-600">
-                {(item.price / 100).toFixed(2)} грн
-              </p>
+              <div className="space-y-1">
+                <p className="text-blue-600 font-semibold">
+                  {(item.price / 100).toFixed(2)} грн
+                </p>
+                {item.discount_amount && item.discount_amount > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-gray-500 line-through text-sm">
+                      Була ціна:{" "}
+                      {((item.original_price || item.price) / 100).toFixed(2)}{" "}
+                      грн
+                    </p>
+                    <p className="text-green-600 text-sm font-medium">
+                      Знижка: {(item.discount_amount / 100).toFixed(2)} грн на
+                      одиницю
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Quantity Controls */}
@@ -248,6 +270,25 @@ export default function CartPage() {
 
       {/* Cart Summary */}
       <div className="mt-6 bg-white shadow rounded-lg p-6">
+        {getTotalSavings() > 0 && (
+          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm text-gray-600">Первинна сума:</span>
+              <span className="text-sm text-gray-500 line-through">
+                {(getOriginalTotal() / 100).toFixed(2)} грн
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-green-600">
+                Ваша економія:
+              </span>
+              <span className="text-lg font-bold text-green-600">
+                {(getTotalSavings() / 100).toFixed(2)} грн
+              </span>
+            </div>
+          </div>
+        )}
+
         <div className="flex justify-between items-center mb-4">
           <span className="text-lg font-semibold">Загальна сума:</span>
           <span className="text-2xl font-bold text-blue-600">

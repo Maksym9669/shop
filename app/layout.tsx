@@ -30,9 +30,6 @@ export default function RootLayout({
               <Navigation />
             </div>
             <div className="bg-black bg-opacity-20 text-center text-sm py-1">
-              <Link href="/services" className="mx-3 hover:underline">
-                Список послуг
-              </Link>
               <Link href="/specials" className="mx-3 hover:underline">
                 Спецпропозиції
               </Link>
