@@ -112,10 +112,10 @@ export default function EditProductPage() {
 
       {/* Main Content */}
       <div className="flex-1 w-full max-w-lg md:max-w-lg mx-auto p-6 bg-white shadow rounded">
-        <h1 className="text-2xl font-bold mb-4">Edit Product</h1>
+        <h1 className="text-2xl font-bold mb-4">Змінити товар</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block mb-1 font-medium">Name</label>
+            <label className="block mb-1 font-medium">Назва</label>
             <input
               type="text"
               name="name"
@@ -127,7 +127,7 @@ export default function EditProductPage() {
           </div>
 
           <div>
-            <label className="block mb-1 font-medium">Description</label>
+            <label className="block mb-1 font-medium">Опис</label>
             <textarea
               name="description"
               value={form.description}
@@ -137,7 +137,7 @@ export default function EditProductPage() {
           </div>
 
           <div>
-            <label className="block mb-1 font-medium">Price</label>
+            <label className="block mb-1 font-medium">Ціна</label>
             <input
               type="number"
               name="price"
@@ -150,7 +150,7 @@ export default function EditProductPage() {
           </div>
 
           <div>
-            <label className="block mb-1 font-medium">Quantity</label>
+            <label className="block mb-1 font-medium">Кількість</label>
             <input
               type="number"
               name="quantity"
@@ -163,7 +163,7 @@ export default function EditProductPage() {
           </div>
 
           <div>
-            <label className="block mb-1 font-medium">Category ID</label>
+            <label className="block mb-1 font-medium">Категорія</label>
             <input
               type="number"
               name="category_id"
@@ -175,7 +175,7 @@ export default function EditProductPage() {
           </div>
 
           <div>
-            <label className="block mb-1 font-medium">Product Image</label>
+            <label className="block mb-1 font-medium">Фото товару</label>
             <input
               type="file"
               accept="image/*"
@@ -191,7 +191,7 @@ export default function EditProductPage() {
             disabled={saving}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
           >
-            {saving ? "Saving..." : "Save Changes"}
+            {saving ? "Зберігаємо..." : "Зберегти зміни"}
           </button>
         </form>
       </div>
